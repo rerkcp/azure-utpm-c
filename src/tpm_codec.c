@@ -253,6 +253,11 @@ TPM_RC Initialize_TPM_Codec(TSS_DEVICE* tpm)
         LogError("Invalid parameter tpm is NULL");
         result = TPM_RC_FAILURE;
     }
+    else if( ( tpm->command_lock = Lock_Init()) == NULL)
+    {
+        LogError("creating lock object");
+        result = TPM_RC_FAILURE;
+    }
     else if ( (tpm->tpm_comm_handle = tpm_comm_create(tpm->comms_endpoint)) == NULL)
     {
         LogError("creating tpm_comm object");
@@ -291,6 +296,7 @@ void Deinit_TPM_Codec(TSS_DEVICE* tpm)
     if (tpm != NULL)
     {
         tpm_comm_destroy(tpm->tpm_comm_handle);
+        (void)Lock_Deinit(tpm->command_lock);
     }
 }
 
@@ -1056,7 +1062,8 @@ TSS_DispatchCmd(
         result = TPM_RC_FAILURE;
     }
     else
-    {
+    {        
+        Lock(tpm->command_lock);
         cmdCtx->RespBufPtr = cmdCtx->RespBuffer;
         cmdCtx->RespParamSize = 0;
         cmdCtx->RetHandle = TPM_RH_UNASSIGNED;
@@ -1123,6 +1130,7 @@ TSS_DispatchCmd(
                 }
             }
         }
+        Unlock(tpm->command_lock);
     }
     return result;
 }

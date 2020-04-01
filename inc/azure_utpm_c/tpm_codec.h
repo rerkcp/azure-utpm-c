@@ -13,6 +13,7 @@ extern "C" {
 
 #include "Tpm.h"
 #include "tpm_comm.h"
+#include "azure_c_shared_utility/lock.h"
 #include "umock_c/umock_c_prod.h"
 
 // TSS status codes
@@ -65,6 +66,8 @@ typedef struct
     TPM_RC              LastRawResponse;
 
     const char* comms_endpoint;
+
+    LOCK_HANDLE command_lock;
 }
 TSS_DEVICE;
 
